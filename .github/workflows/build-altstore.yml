@@ -25,8 +25,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: catch-up-altstore-publish
@@ -35,9 +33,6 @@ concurrency:
 jobs:
   build-and-publish:
     runs-on: macos-26
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Check out project
         uses: actions/checkout@v4
@@ -121,9 +116,18 @@ jobs:
           TAG: v${{ inputs.version || '1.0.0' }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" package/CatchUp-Free.ipa --clobber
+            gh release upload "$TAG" \
+              package/CatchUp-Free.ipa \
+              package/source.json \
+              package/site/CatchUp-AppIcon-1024.png \
+              --clobber
           else
-            gh release create "$TAG" package/CatchUp-Free.ipa --title "Catch Up $TAG" --notes "Free AltStore edition."
+            gh release create "$TAG" \
+              package/CatchUp-Free.ipa \
+              package/source.json \
+              package/site/CatchUp-AppIcon-1024.png \
+              --title "Catch Up $TAG" \
+              --notes "Free AltStore edition."
           fi
 
       - name: Upload build files
@@ -133,18 +137,4 @@ jobs:
           path: |
             package/CatchUp-Free.ipa
             package/source.json
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: Upload Pages site
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: package/site
-
-      - name: Deploy source to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
 
