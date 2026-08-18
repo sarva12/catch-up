@@ -6,9 +6,9 @@ import AppIntents
 struct CatchUpAlarmMetadata: AlarmMetadata {}
 
 struct OpenCatchUpIntent: LiveActivityIntent {
-    static var title: LocalizedStringResource = "Start Catch-up"
-    static var description = IntentDescription("Opens today's news briefing.")
-    static var openAppWhenRun = true
+    static let title: LocalizedStringResource = "Start Catch-up"
+    static let description = IntentDescription("Opens today's news briefing.")
+    static let openAppWhenRun = true
 
     @Parameter(title: "Alarm ID")
     var alarmID: String
@@ -53,8 +53,14 @@ struct AlarmScheduler {
             textColor: .white,
             systemImageName: "newspaper"
         )
+        let stopButton = AlarmButton(
+            text: "Stop",
+            textColor: .white,
+            systemImageName: "stop.fill"
+        )
         let alert = AlarmPresentation.Alert(
             title: "Your morning catch-up is ready",
+            stopButton: stopButton,
             secondaryButton: startButton,
             secondaryButtonBehavior: .custom
         )
@@ -77,5 +83,4 @@ struct AlarmScheduler {
         try manager.cancel(id: id)
     }
 }
-
 
