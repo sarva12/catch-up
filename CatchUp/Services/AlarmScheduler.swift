@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-import AlarmKit
+@preconcurrency import AlarmKit
 import AppIntents
 
 struct CatchUpAlarmMetadata: AlarmMetadata {}
