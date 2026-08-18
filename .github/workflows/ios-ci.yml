@@ -1,0 +1,31 @@
+name: iOS CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Configure identifiers
+        env:
+          BUNDLE_ID: com.example.ci.CatchUp
+        run: bash scripts/configure_identifiers.sh
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build for simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project CatchUp.xcodeproj \
+            -scheme CatchUp \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            CODE_SIGNING_ALLOWED=NO \
+            build test
+
+

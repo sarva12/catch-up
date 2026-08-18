@@ -1,0 +1,55 @@
+name: CatchUp
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    DEVELOPMENT_TEAM: ""
+targets:
+  CatchUp:
+    type: application
+    platform: iOS
+    sources:
+      - CatchUp
+    dependencies:
+      - target: CatchUpMonitor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.CatchUp
+        PRODUCT_NAME: CatchUp
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Catch Up
+        INFOPLIST_KEY_NSAlarmKitUsageDescription: Catch Up schedules your morning alarm and opens your daily news briefing.
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+        CODE_SIGN_ENTITLEMENTS: CatchUp/CatchUp.entitlements
+  CatchUpMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/CatchUpMonitor
+      - CatchUp/Shared
+    info:
+      path: Extensions/CatchUpMonitor/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.CatchUp.Monitor
+        CODE_SIGN_ENTITLEMENTS: Extensions/CatchUpMonitor/CatchUpMonitor.entitlements
+        SKIP_INSTALL: YES
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+  CatchUpTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - CatchUpTests
+    dependencies:
+      - target: CatchUp
+

@@ -1,0 +1,49 @@
+workflows:
+  catch-up-testflight:
+    name: Catch Up — TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    integrations:
+      app_store_connect: CatchUpAppStoreKey
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.yourname.CatchUp
+      vars:
+        BUNDLE_ID: com.yourname.CatchUp
+        XCODE_PROJECT: CatchUp.xcodeproj
+        XCODE_SCHEME: CatchUp
+      xcode: latest
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+      - name: Configure app identifiers
+        script: bash scripts/configure_identifiers.sh
+      - name: Generate Xcode project
+        script: xcodegen generate
+      - name: Apply signing profiles
+        script: xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+      - name: Run unit tests
+        script: |
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+      - name: Build signed IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+

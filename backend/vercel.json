@@ -1,0 +1,18 @@
+{
+  "rewrites": [
+    { "source": "/v1/briefing", "destination": "/api/v1/briefing" },
+    { "source": "/health", "destination": "/api/health" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Cache-Control", "value": "public, s-maxage=900, stale-while-revalidate=3600" }
+      ]
+    }
+  ]
+}
+
+

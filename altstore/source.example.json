@@ -1,0 +1,44 @@
+{
+  "name": "Catch Up",
+  "subtitle": "A finite morning news habit",
+  "description": "Catch Up turns your morning alarm into a short, focused news briefing with progress and streaks.",
+  "iconURL": "https://YOUR_GITHUB_USERNAME.github.io/catch-up/CatchUp-AppIcon-1024.png",
+  "website": "https://YOUR_GITHUB_USERNAME.github.io/catch-up/",
+  "tintColor": "#111111",
+  "featuredApps": [
+    "com.yourname.CatchUpFree"
+  ],
+  "apps": [
+    {
+      "name": "Catch Up",
+      "bundleIdentifier": "com.yourname.CatchUpFree",
+      "developerName": "YOUR NAME",
+      "subtitle": "Wake up informed",
+      "localizedDescription": "Set a morning alarm, read a finite briefing, and build a daily news habit. This free-sideload edition omits Screen Time shielding because that feature requires an Apple-managed entitlement.",
+      "iconURL": "https://YOUR_GITHUB_USERNAME.github.io/catch-up/CatchUp-AppIcon-1024.png",
+      "tintColor": "#111111",
+      "category": "utilities",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "buildVersion": "1",
+          "date": "2026-08-18",
+          "localizedDescription": "Initial AltStore release.",
+          "downloadURL": "https://github.com/YOUR_GITHUB_USERNAME/catch-up/releases/download/v1.0.0/CatchUp-Free.ipa",
+          "size": 0,
+          "sha256": "REPLACE_WITH_IPA_SHA256",
+          "minOSVersion": "26.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSAlarmKitUsageDescription": "Catch Up schedules your morning alarm and opens your daily news briefing."
+        }
+      }
+    }
+  ],
+  "news": []
+}
+
+

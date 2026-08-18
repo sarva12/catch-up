@@ -1,0 +1,36 @@
+name: CatchUpFree
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    DEVELOPMENT_TEAM: ""
+targets:
+  CatchUpFree:
+    type: application
+    platform: iOS
+    sources:
+      - path: CatchUp
+        excludes:
+          - Shared
+          - CatchUp.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.CatchUpFree
+        PRODUCT_NAME: CatchUp
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Catch Up
+        INFOPLIST_KEY_NSAlarmKitUsageDescription: Catch Up schedules your morning alarm and opens your daily news briefing.
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) FREE_SIDELOAD"
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+

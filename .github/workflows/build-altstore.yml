@@ -1,0 +1,145 @@
+name: Build and publish AltStore edition
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: Unique bundle ID, such as com.yourname.CatchUpFree
+        required: true
+        default: com.github.sarva12.CatchUpFree
+      developer_name:
+        description: Name shown in AltStore
+        required: true
+        default: sarva12
+      version:
+        description: Marketing version
+        required: true
+        default: 1.0.0
+      build_number:
+        description: Numeric build number
+        required: true
+        default: "1"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: catch-up-altstore-publish
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: macos-26
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate app icons
+        run: |
+          swift scripts/generate_app_icon.swift \
+            CatchUp/Resources/Assets.xcassets/AppIcon.appiconset/CatchUp-AppIcon-1024.png \
+            altstore/CatchUp-AppIcon-1024.png
+
+      - name: Generate free-edition Xcode project
+        run: xcodegen generate --spec project.free.yml
+
+      - name: Build unsigned device app
+        env:
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+          VERSION: ${{ inputs.version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          xcodebuild \
+            -project CatchUpFree.xcodeproj \
+            -scheme CatchUpFree \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Package IPA
+        run: |
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf package
+          mkdir -p package/Payload
+          cp -R "$APP_PATH" package/Payload/CatchUp.app
+          cd package
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent Payload CatchUp-Free.ipa
+
+      - name: Generate AltStore source and Pages site
+        env:
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+          DEVELOPER_NAME: ${{ inputs.developer_name }}
+          VERSION: ${{ inputs.version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER}"
+          REPOSITORY="${GITHUB_REPOSITORY#*/}"
+          node altstore/generate-source.mjs \
+            --ipa package/CatchUp-Free.ipa \
+            --owner "$OWNER" \
+            --repo "$REPOSITORY" \
+            --bundle-id "$BUNDLE_ID" \
+            --developer "$DEVELOPER_NAME" \
+            --version "$VERSION" \
+            --build "$BUILD_NUMBER" \
+            --output package/source.json
+          mkdir -p package/site
+          cp package/source.json package/site/source.json
+          cp altstore/CatchUp-AppIcon-1024.png package/site/CatchUp-AppIcon-1024.png
+          cat > package/site/index.html <<'EOF'
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>Catch Up for AltStore</title>
+          <style>body{max-width:40rem;margin:10vh auto;padding:2rem;font:18px system-ui;color:#111;background:#fff}a{color:#111}</style>
+          <h1>Catch Up</h1>
+          <p>A finite morning news habit for iPhone.</p>
+          <p><a href="source.json">AltStore source</a></p>
+          EOF
+
+      - name: Publish IPA as a GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ inputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" package/CatchUp-Free.ipa --clobber
+          else
+            gh release create "$TAG" package/CatchUp-Free.ipa --title "Catch Up $TAG" --notes "Free AltStore edition."
+          fi
+
+      - name: Upload build files
+        uses: actions/upload-artifact@v4
+        with:
+          name: CatchUp-AltStore-${{ inputs.version }}
+          path: |
+            package/CatchUp-Free.ipa
+            package/source.json
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: package/site
+
+      - name: Deploy source to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
