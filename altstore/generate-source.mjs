@@ -34,16 +34,17 @@ const ipaName = values["ipa-name"] || basename(ipaPath);
 const ipaData = await readFile(ipaPath);
 const ipaDetails = await stat(ipaPath);
 const sha256 = createHash("sha256").update(ipaData).digest("hex");
-const pagesRoot = `https://${owner}.github.io/${repository}`;
-const releaseURL = `https://github.com/${owner}/${repository}/releases/download/${releaseTag}/${ipaName}`;
-const iconURL = `${pagesRoot}/CatchUp-AppIcon-1024.png`;
+const repositoryURL = `https://github.com/${owner}/${repository}`;
+const releaseRoot = `${repositoryURL}/releases/download/${releaseTag}`;
+const releaseURL = `${releaseRoot}/${ipaName}`;
+const iconURL = `${releaseRoot}/CatchUp-AppIcon-1024.png`;
 
 const source = {
   name: "Catch Up",
   subtitle: "A finite morning news habit",
   description: "Catch Up turns your morning alarm into a short, focused news briefing with progress and streaks.",
   iconURL,
-  website: `${pagesRoot}/`,
+  website: repositoryURL,
   tintColor: "#111111",
   featuredApps: [bundleIdentifier],
   apps: [{
@@ -79,6 +80,5 @@ await writeFile(output, `${JSON.stringify(source, null, 2)}\n`, "utf8");
 console.log(`Created ${output}`);
 console.log(`IPA: ${ipaDetails.size} bytes`);
 console.log(`SHA-256: ${sha256}`);
-console.log(`Source URL after GitHub Pages deployment: ${pagesRoot}/source.json`);
-
+console.log(`Source URL after release publishing: ${releaseRoot}/source.json`);
 
