@@ -7,7 +7,7 @@ Catch Up has a free AltStore edition that keeps the AlarmKit alarm, finite brief
 - `project.free.yml` creates an entitlement-free `CatchUpFree` target.
 - `.github/workflows/build-altstore.yml` builds the unsigned IPA on GitHub's macOS runner.
 - The workflow publishes `CatchUp-Free.ipa` as a GitHub Release.
-- The workflow generates `source.json` and deploys it with the app icon to GitHub Pages.
+- The workflow publishes `source.json` and the app icon alongside the IPA in a GitHub Release.
 
 ## One-time setup
 
@@ -15,16 +15,17 @@ Catch Up has a free AltStore edition that keeps the AlarmKit alarm, finite brief
 2. Create a **public** repository. `catch-up` is a good name.
 3. Upload the contents of this `CatchUp` folder to the repository root. The `.github` folder must be included.
 4. Open **Settings → Actions → General**. Under **Workflow permissions**, select **Read and write permissions**, then save.
-5. Open **Settings → Pages** and set **Source** to **GitHub Actions**.
-6. Open **Actions → Build and publish AltStore edition → Run workflow**.
-7. The workflow is already configured for `com.github.sarva12.CatchUpFree` and developer name `sarva12`. Review those values, then run it.
-8. Wait for the green checkmark. Open the workflow run and copy the URL shown under **Deploy source to GitHub Pages**. The source address is that URL plus `source.json`.
+5. Open **Actions → Build and publish AltStore edition → Run workflow**.
+6. The workflow is already configured for `com.github.sarva12.CatchUpFree` and developer name `sarva12`. Review those values, then run it.
+7. Wait for the green checkmark. The release contains `CatchUp-Free.ipa`, `source.json`, and `CatchUp-AppIcon-1024.png`.
 
 ## Put it on the iPhone
 
 1. Install AltServer on Windows and use it to install AltStore Classic on the iPhone.
 2. Keep the iPhone and PC on the same Wi-Fi and leave AltServer running.
-3. In AltStore Classic, open **Sources**, tap **+**, and paste the GitHub Pages `source.json` URL.
+3. In AltStore Classic, open **Sources**, tap **+**, and paste:
+
+   `https://github.com/sarva12/catch-up/releases/download/v1.0.0/source.json`
 4. Open the Catch Up source and install the app. AltStore signs it locally using your free Apple Account.
 5. Open Catch Up, allow Alarm access, and set the daily alarm.
 
