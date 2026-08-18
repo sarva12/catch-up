@@ -56,9 +56,9 @@ jobs:
 
       - name: Build unsigned device app
         env:
-          BUNDLE_ID: ${{ inputs.bundle_id }}
-          VERSION: ${{ inputs.version }}
-          BUILD_NUMBER: ${{ inputs.build_number }}
+          BUNDLE_ID: ${{ inputs.bundle_id || 'com.github.sarva12.CatchUpFree' }}
+          VERSION: ${{ inputs.version || '1.0.0' }}
+          BUILD_NUMBER: ${{ inputs.build_number || '1' }}
         run: |
           xcodebuild \
             -project CatchUpFree.xcodeproj \
@@ -85,10 +85,10 @@ jobs:
 
       - name: Generate AltStore source and Pages site
         env:
-          BUNDLE_ID: ${{ inputs.bundle_id }}
-          DEVELOPER_NAME: ${{ inputs.developer_name }}
-          VERSION: ${{ inputs.version }}
-          BUILD_NUMBER: ${{ inputs.build_number }}
+          BUNDLE_ID: ${{ inputs.bundle_id || 'com.github.sarva12.CatchUpFree' }}
+          DEVELOPER_NAME: ${{ inputs.developer_name || 'sarva12' }}
+          VERSION: ${{ inputs.version || '1.0.0' }}
+          BUILD_NUMBER: ${{ inputs.build_number || '1' }}
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER}"
           REPOSITORY="${GITHUB_REPOSITORY#*/}"
@@ -118,7 +118,7 @@ jobs:
       - name: Publish IPA as a GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v${{ inputs.version }}
+          TAG: v${{ inputs.version || '1.0.0' }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" package/CatchUp-Free.ipa --clobber
@@ -129,7 +129,7 @@ jobs:
       - name: Upload build files
         uses: actions/upload-artifact@v4
         with:
-          name: CatchUp-AltStore-${{ inputs.version }}
+          name: CatchUp-AltStore-${{ inputs.version || '1.0.0' }}
           path: |
             package/CatchUp-Free.ipa
             package/source.json
