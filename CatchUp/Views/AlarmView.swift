@@ -102,7 +102,7 @@ private struct AlarmRow: View {
 
                 Toggle("", isOn: Binding(
                     get: { alarm.isEnabled },
-                    set: onToggle
+                    set: { newValue in onToggle(newValue) }
                 ))
                 .labelsHidden()
                 .tint(.black)
@@ -131,9 +131,9 @@ private struct AlarmRow: View {
     private var deliveryLabel: String {
         guard alarm.isEnabled else { return "OFF" }
         switch alarm.deliveryMode {
-        case .alarmKit: "SYSTEM ALARM"
-        case .notification: "NOTIFICATION"
-        case nil: "SCHEDULING"
+        case .alarmKit: return "SYSTEM ALARM"
+        case .notification: return "NOTIFICATION"
+        case nil: return "SCHEDULING"
         }
     }
 }
