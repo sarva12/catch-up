@@ -1,4 +1,4 @@
-name: Build and publish AltStore edition
+name: Build and publish SideStore edition
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
         required: true
         default: com.github.sarva12.CatchUpFree
       developer_name:
-        description: Name shown in AltStore
+        description: Name shown in SideStore
         required: true
         default: sarva12
       version:
@@ -27,7 +27,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: catch-up-altstore-publish
+  group: catch-up-sidestore-publish
   cancel-in-progress: false
 
 jobs:
@@ -76,9 +76,9 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/CatchUp.app
           cd package
-          /usr/bin/ditto -c -k --sequesterRsrc --keepParent Payload CatchUp-Free.ipa
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent Payload CatchUp-SideStore.ipa
 
-      - name: Generate AltStore source and Pages site
+      - name: Generate SideStore-compatible AltSource
         env:
           BUNDLE_ID: ${{ inputs.bundle_id || 'com.github.sarva12.CatchUpFree' }}
           DEVELOPER_NAME: ${{ inputs.developer_name || 'sarva12' }}
@@ -88,7 +88,7 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER}"
           REPOSITORY="${GITHUB_REPOSITORY#*/}"
           node altstore/generate-source.mjs \
-            --ipa package/CatchUp-Free.ipa \
+            --ipa package/CatchUp-SideStore.ipa \
             --owner "$OWNER" \
             --repo "$REPOSITORY" \
             --bundle-id "$BUNDLE_ID" \
@@ -96,6 +96,7 @@ jobs:
             --version "$VERSION" \
             --build "$BUILD_NUMBER" \
             --output package/source.json
+          cp package/source.json package/sidestore-source.json
           mkdir -p package/site
           cp package/source.json package/site/source.json
           cp altstore/CatchUp-AppIcon-1024.png package/site/CatchUp-AppIcon-1024.png
@@ -103,38 +104,44 @@ jobs:
           <!doctype html>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width,initial-scale=1">
-          <title>Catch Up for AltStore</title>
+          <title>Catch Up for SideStore</title>
           <style>body{max-width:40rem;margin:10vh auto;padding:2rem;font:18px system-ui;color:#111;background:#fff}a{color:#111}</style>
           <h1>Catch Up</h1>
           <p>A finite morning news habit for iPhone.</p>
-          <p><a href="source.json">AltStore source</a></p>
+          <p><a href="source.json">SideStore source</a></p>
           EOF
 
-      - name: Publish IPA as a GitHub Release
+      - name: Publish SideStore IPA and source as a GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: v${{ inputs.version || '1.0.0' }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" \
-              package/CatchUp-Free.ipa \
+              package/CatchUp-SideStore.ipa \
               package/source.json \
+              package/sidestore-source.json \
               package/site/CatchUp-AppIcon-1024.png \
               --clobber
+            gh release edit "$TAG" \
+              --title "Catch Up $TAG for SideStore" \
+              --notes "Free SideStore edition. Add sidestore-source.json as an app source, then install Catch Up."
           else
             gh release create "$TAG" \
-              package/CatchUp-Free.ipa \
+              package/CatchUp-SideStore.ipa \
               package/source.json \
+              package/sidestore-source.json \
               package/site/CatchUp-AppIcon-1024.png \
-              --title "Catch Up $TAG" \
-              --notes "Free AltStore edition."
+              --title "Catch Up $TAG for SideStore" \
+              --notes "Free SideStore edition. Add sidestore-source.json as an app source, then install Catch Up."
           fi
 
       - name: Upload build files
         uses: actions/upload-artifact@v4
         with:
-          name: CatchUp-AltStore-${{ inputs.version || '1.0.0' }}
+          name: CatchUp-SideStore-${{ inputs.version || '1.0.0' }}
           path: |
-            package/CatchUp-Free.ipa
+            package/CatchUp-SideStore.ipa
             package/source.json
+            package/sidestore-source.json
 
