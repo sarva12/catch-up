@@ -44,7 +44,7 @@ Select the development team in Xcode and run on a physical iPhone. AlarmKit and 
 
 Follow [docs/INSTALL_WITHOUT_A_MAC.md](docs/INSTALL_WITHOUT_A_MAC.md) to build on Codemagic and install through TestFlight. A paid Apple Developer membership remains an Apple requirement.
 
-For the free Apple Account edition without Screen Time shielding, follow [docs/FREE_IPHONE_INSTALL.md](docs/FREE_IPHONE_INSTALL.md). Its GitHub Actions workflow builds an unsigned IPA for AltStore Classic, publishes the IPA, and hosts the source JSON.
+For the free Apple Account edition without Screen Time shielding, follow [docs/SIDESTORE_INSTALL.md](docs/SIDESTORE_INSTALL.md). Its GitHub Actions workflow builds an unsigned SideStore-compatible IPA and publishes the IPA plus its AltSource JSON.
 
 ## Tests
 
@@ -61,4 +61,3 @@ In Xcode, use **Product → Test** for the Swift streak and daily-reset tests. G
 - Privacy-policy public URL in App Store Connect.
 - `PERPLEXITY_API_KEY` and `CATCHUP_ACCESS_TOKEN` in the backend host.
 - Apple Family Controls distribution entitlement approval for both app IDs.
-
