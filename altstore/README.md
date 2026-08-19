@@ -1,51 +1,33 @@
-# Catch Up AltStore source
+# Catch Up SideStore source
 
-An AltStore Classic source is a publicly reachable JSON file describing an app and its downloadable `.ipa`. It does not compile the iOS source code.
+SideStore is compatible with the AltSource JSON format, so this directory keeps the protocol-oriented `altstore` name while publishing a SideStore-ready app source.
 
-## Before using this kit
+## Automated publishing
 
-The included `project.free.yml` and GitHub workflow build **CatchUp-Free.ipa** without Screen Time shielding. The workflow also performs all publishing steps in this document automatically. See `docs/FREE_IPHONE_INSTALL.md` for the shortest route.
+The GitHub workflow builds `CatchUp-SideStore.ipa` without Screen Time shielding, calculates the IPA size and SHA-256, and publishes these release assets:
 
-## Recommended free hosting layout
+- `CatchUp-SideStore.ipa`
+- `sidestore-source.json`
+- `source.json` as a compatibility alias
+- `CatchUp-AppIcon-1024.png`
 
-Use a public GitHub repository named `catch-up`:
+The public SideStore source URL is:
 
-- GitHub Releases hosts `CatchUp-Free.ipa`.
-- GitHub Pages hosts `source.json` and `CatchUp-AppIcon-1024.png`.
+`https://github.com/sarva12/catch-up/releases/download/v1.0.0/sidestore-source.json`
 
-## Generate the finished source
+SideStore users can paste that URL under **Sources**, or open this URL scheme after SideStore is installed:
 
-From this directory, run:
+`sidestore://source?url=https%3A%2F%2Fgithub.com%2Fsarva12%2Fcatch-up%2Freleases%2Fdownload%2Fv1.0.0%2Fsidestore-source.json`
+
+## Manual generation
 
 ```powershell
 node generate-source.mjs `
-  --ipa C:\path\to\CatchUp-Free.ipa `
+  --ipa C:\path\to\CatchUp-SideStore.ipa `
   --owner YOUR_GITHUB_USERNAME `
   --repo catch-up `
   --bundle-id com.yourname.CatchUpFree `
   --developer "YOUR NAME"
 ```
 
-The script reads the IPA, calculates its byte size and SHA-256, and creates `source.json`. The version and build values must match the compiled app exactly; override them with `--version` and `--build` if needed.
-
-## Publish
-
-1. Create a GitHub Release tagged `v1.0.0` and attach the IPA as `CatchUp-Free.ipa`.
-2. Place the generated `source.json` and app icon at the root of the GitHub Pages branch.
-3. Enable GitHub Pages for that branch.
-4. Confirm these URLs open without signing in:
-   - `https://YOUR_GITHUB_USERNAME.github.io/catch-up/source.json`
-   - `https://YOUR_GITHUB_USERNAME.github.io/catch-up/CatchUp-AppIcon-1024.png`
-   - The `downloadURL` contained inside `source.json`
-5. In AltStore Classic on the iPhone, open **Sources**, tap **+**, and paste the `source.json` URL.
-
-## Updating
-
-For each update, upload the new IPA, then add its version object to the **beginning** of the app's `versions` array. AltStore treats the first compatible entry as the newest version.
-
-## Important
-
-- `bundleIdentifier`, `version`, `buildVersion`, permissions, size, and SHA-256 must match the IPA. AltStore verifies them.
-- A free Apple Account must refresh sideloaded apps every seven days.
-- Keep AltServer running on the Windows computer and the iPhone on the same Wi-Fi when refreshing.
-
+The version, build, permissions, byte size, and SHA-256 in the source must match the IPA. A free Apple Account must refresh SideStore and installed apps every seven days.
