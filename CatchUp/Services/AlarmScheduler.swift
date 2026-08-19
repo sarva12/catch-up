@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 @preconcurrency import AlarmKit
 import AppIntents
+@preconcurrency import UserNotifications
 
 struct CatchUpAlarmMetadata: AlarmMetadata {}
 
@@ -30,15 +31,32 @@ struct OpenCatchUpIntent: LiveActivityIntent {
 struct AlarmScheduler {
     private let manager = AlarmManager.shared
 
-    func requestAuthorization() async throws -> Bool {
-        try await manager.requestAuthorization() == .authorized
-    }
-
-    func scheduleDaily(at date: Date, replacing existingID: UUID?) async throws -> UUID {
-        if let existingID {
-            try? manager.cancel(id: existingID)
+    func scheduleDaily(at date: Date, label: String) async throws -> ScheduledAlarm {
+        do {
+            let authorization = try await manager.requestAuthorization()
+            if authorization == .authorized {
+                let id = try await scheduleAlarmKit(at: date, label: label)
+                return ScheduledAlarm(systemID: id, deliveryMode: .alarmKit)
+            }
+        } catch {
+            // Personal SideStore profiles can reject AlarmKit on physical devices.
+            // A standard notification keeps the saved alarm functional in that case.
         }
 
+        return try await scheduleNotification(at: date, label: label)
+    }
+
+    func cancel(id: UUID, deliveryMode: AlarmDeliveryMode?) {
+        if deliveryMode == .notification {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(
+                withIdentifiers: [notificationIdentifier(for: id)]
+            )
+        } else {
+            try? manager.cancel(id: id)
+        }
+    }
+
+    private func scheduleAlarmKit(at date: Date, label: String) async throws -> UUID {
         let components = Calendar.current.dateComponents([.hour, .minute], from: date)
         let time = Alarm.Schedule.Relative.Time(
             hour: components.hour ?? 7,
@@ -59,7 +77,7 @@ struct AlarmScheduler {
             systemImageName: "stop.fill"
         )
         let alert = AlarmPresentation.Alert(
-            title: "Your morning catch-up is ready",
+            title: label,
             stopButton: stopButton,
             secondaryButton: startButton,
             secondaryButtonBehavior: .custom
@@ -79,8 +97,42 @@ struct AlarmScheduler {
         return id
     }
 
-    func cancel(id: UUID) throws {
-        try manager.cancel(id: id)
+    private func scheduleNotification(at date: Date, label: String) async throws -> ScheduledAlarm {
+        let center = UNUserNotificationCenter.current()
+        let granted = try await center.requestAuthorization(options: [.alert, .sound])
+        guard granted else { throw AlarmSchedulingError.notificationsDenied }
+
+        let id = UUID()
+        let content = UNMutableNotificationContent()
+        content.title = label
+        content.body = "Your daily briefing is ready. Tap to start your catch-up."
+        content.sound = .default
+        content.categoryIdentifier = "CATCH_UP_ALARM"
+
+        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        let request = UNNotificationRequest(
+            identifier: notificationIdentifier(for: id),
+            content: content,
+            trigger: trigger
+        )
+        try await center.add(request)
+        return ScheduledAlarm(systemID: id, deliveryMode: .notification)
+    }
+
+    private func notificationIdentifier(for id: UUID) -> String {
+        "catch-up.alarm.\(id.uuidString)"
+    }
+}
+
+enum AlarmSchedulingError: LocalizedError {
+    case notificationsDenied
+
+    var errorDescription: String? {
+        switch self {
+        case .notificationsDenied:
+            "Alarm and notification access are turned off. Enable notifications for Catch Up in iPhone Settings."
+        }
     }
 }
 
