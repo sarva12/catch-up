@@ -36,7 +36,7 @@ struct SettingsView: View {
 
             #if FREE_SIDELOAD
             Section("Morning focus") {
-                Text("This free AltStore edition uses the alarm's Start Catch-up button instead of blocking other apps. Screen Time shielding requires special Apple provisioning.")
+                Text("This free SideStore edition uses the alarm's Start Catch-up button instead of blocking other apps. Screen Time shielding requires special Apple provisioning.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -95,4 +95,3 @@ private struct FreeCompatiblePickerModifier: ViewModifier {
         #endif
     }
 }
-
