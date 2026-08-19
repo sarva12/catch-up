@@ -41,6 +41,17 @@ struct DemoNewsService: NewsServing {
                 sourceURL: URL(string: "https://example.com/technology")!,
                 publishedAt: now,
                 readTimeMinutes: 2
+            ),
+            NewsStory(
+                id: "demo-science-climate",
+                section: "SCIENCE",
+                headline: "Better forecasts are changing how communities prepare",
+                summary: "New observing systems and faster models are improving short-term predictions for extreme weather. The harder step is turning an earlier warning into action people can take.",
+                whyItMatters: "Forecasting only saves lives when alerts are clear, trusted, and connected to practical local plans.",
+                sourceName: "Demo briefing",
+                sourceURL: URL(string: "https://example.com/science")!,
+                publishedAt: now,
+                readTimeMinutes: 2
             )
         ]
     }
