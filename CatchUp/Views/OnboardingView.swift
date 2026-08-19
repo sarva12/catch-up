@@ -5,7 +5,6 @@ struct OnboardingView: View {
     @State private var page = 0
 
     var body: some View {
-        @Bindable var store = store
         VStack(alignment: .leading, spacing: 24) {
             HStack {
                 Text("CATCH UP")
@@ -52,15 +51,13 @@ struct OnboardingView: View {
             } else {
                 Text("Keep it\nfinite.")
                     .font(.system(size: 44, weight: .black, design: .rounded))
-                Stepper(value: $store.settings.dailyStoryCount, in: 3...7) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("\(store.settings.dailyStoryCount) stories each morning")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                        Text("Usually \(store.settings.dailyStoryCount * 2)–\(store.settings.dailyStoryCount * 3) minutes")
-                            .foregroundStyle(.secondary)
-                    }
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("4 stories each morning")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Usually 8–12 minutes")
+                        .foregroundStyle(.secondary)
                 }
-                Text("No infinite scroll. Completing the set ends the session and advances your streak.")
+                Text("Completing four ends the required session and advances your streak. If curiosity wins, the full Perplexity Discover feed is waiting in Explore.")
                     .font(.system(size: 17, design: .serif))
                     .lineSpacing(4)
             }
@@ -84,5 +81,4 @@ struct OnboardingView: View {
         .background(Color.white)
     }
 }
-
 
