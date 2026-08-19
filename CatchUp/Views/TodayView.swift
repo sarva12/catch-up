@@ -2,6 +2,16 @@ import SwiftUI
 
 struct TodayView: View {
     @Environment(AppStore.self) private var store
+    @State private var selectedSection: String?
+
+    private var sections: [String] {
+        Array(Set(store.stories.map(\.section))).sorted()
+    }
+
+    private var visibleStories: [NewsStory] {
+        guard let selectedSection else { return store.stories }
+        return store.stories.filter { $0.section == selectedSection }
+    }
 
     var body: some View {
         Group {
@@ -22,6 +32,7 @@ struct TodayView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         CatchUpHeader()
+                        TopicStrip(sections: sections, selectedSection: $selectedSection)
                         if let notice = store.briefingNotice {
                             Text(notice.uppercased())
                                 .font(.system(size: 10, weight: .bold, design: .monospaced))
@@ -30,7 +41,7 @@ struct TodayView: View {
                                 .padding(.bottom, 14)
                                 .foregroundStyle(.secondary)
                         }
-                        ForEach(Array(store.stories.enumerated()), id: \.element.id) { index, story in
+                        ForEach(Array(visibleStories.enumerated()), id: \.element.id) { index, story in
                             StoryCard(story: story, number: index + 1)
                             Divider().padding(.horizontal, 20)
                         }
@@ -44,6 +55,45 @@ struct TodayView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .background(Color.white)
+    }
+}
+
+private struct TopicStrip: View {
+    let sections: [String]
+    @Binding var selectedSection: String?
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 9) {
+                TopicButton(title: "TOP STORIES", selected: selectedSection == nil) {
+                    selectedSection = nil
+                }
+                ForEach(sections, id: \.self) { section in
+                    TopicButton(title: section, selected: selectedSection == section) {
+                        selectedSection = section
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .padding(.bottom, 18)
+    }
+}
+
+private struct TopicButton: View {
+    let title: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(title, action: action)
+            .font(.system(size: 11, weight: .black, design: .monospaced))
+            .foregroundStyle(selected ? Color.white : Color.black)
+            .padding(.horizontal, 13)
+            .frame(height: 36)
+            .background(selected ? Color.black : Color.white)
+            .overlay(Capsule().stroke(Color.black.opacity(0.25), lineWidth: 1))
+            .clipShape(Capsule())
     }
 }
 
@@ -126,8 +176,14 @@ private struct StoryCard: View {
                 .disabled(isRead)
 
                 Link(destination: story.sourceURL) {
-                    Image(systemName: "arrow.up.right")
-                        .frame(width: 44, height: 44)
+                    HStack(spacing: 7) {
+                        Text(story.sourceName.uppercased())
+                            .lineLimit(1)
+                        Image(systemName: "arrow.up.right")
+                    }
+                    .font(.system(size: 10, weight: .black, design: .monospaced))
+                    .padding(.horizontal, 12)
+                    .frame(height: 44)
                 }
                 .foregroundStyle(.black)
                 .overlay(Rectangle().stroke(Color.black, lineWidth: 1))
