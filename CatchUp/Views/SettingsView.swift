@@ -11,7 +11,10 @@ struct SettingsView: View {
         @Bindable var store = store
         Form {
             Section("Briefing") {
-                Stepper("\(store.settings.dailyStoryCount) stories", value: $store.settings.dailyStoryCount, in: 3...7)
+                LabeledContent("Daily catch-up", value: "4 required stories")
+                Text("After four, your streak is safe. The Perplexity feed in Explore is always optional.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                 ForEach(NewsTopic.allCases) { topic in
                     Toggle(topic.rawValue, isOn: Binding(
                         get: { store.settings.selectedTopics.contains(topic) },
@@ -95,3 +98,4 @@ private struct FreeCompatiblePickerModifier: ViewModifier {
         #endif
     }
 }
+
