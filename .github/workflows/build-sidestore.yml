@@ -22,7 +22,7 @@ on:
       build_number:
         description: Numeric build number
         required: true
-        default: "4"
+        default: "5"
 
 permissions:
   contents: write
@@ -54,7 +54,7 @@ jobs:
         env:
           BUNDLE_ID: ${{ inputs.bundle_id || 'com.github.sarva12.CatchUpFree' }}
           VERSION: ${{ inputs.version || '1.0.0' }}
-          BUILD_NUMBER: ${{ inputs.build_number || '4' }}
+          BUILD_NUMBER: ${{ inputs.build_number || '5' }}
         run: |
           xcodebuild \
             -project CatchUpFree.xcodeproj \
@@ -91,7 +91,7 @@ jobs:
           BUNDLE_ID: ${{ inputs.bundle_id || 'com.github.sarva12.CatchUpFree' }}
           DEVELOPER_NAME: ${{ inputs.developer_name || 'sarva12' }}
           VERSION: ${{ inputs.version || '1.0.0' }}
-          BUILD_NUMBER: ${{ inputs.build_number || '4' }}
+          BUILD_NUMBER: ${{ inputs.build_number || '5' }}
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER}"
           REPOSITORY="${GITHUB_REPOSITORY#*/}"
