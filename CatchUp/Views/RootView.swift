@@ -20,6 +20,9 @@ struct RootView: View {
             }
             .tabItem { Label("Streak", systemImage: "flame") }
 
+            ExploreView()
+                .tabItem { Label("Explore", systemImage: "safari") }
+
             NavigationStack {
                 SettingsView()
             }
