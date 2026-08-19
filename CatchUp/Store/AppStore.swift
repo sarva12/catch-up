@@ -67,8 +67,8 @@ final class AppStore {
         } else {
             settings = AppSettings()
         }
-        settings.dailyStoryCount = 4
         backendAccessToken = keychain.read(account: "access-token")
+        settings.dailyStoryCount = 4
     }
 
     var requiredStories: [NewsStory] {
