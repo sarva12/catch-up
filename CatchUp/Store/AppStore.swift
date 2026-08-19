@@ -14,8 +14,7 @@ final class AppStore {
     var stories: [NewsStory] = []
     var loadState: LoadState = .idle
     var progress: ReadingProgress
-    var alarmTime: Date
-    var alarmEnabled: Bool
+    var alarms: [CatchUpAlarm]
     var alarmMessage: String?
     var settings: AppSettings
     var briefingNotice: String?
@@ -31,6 +30,7 @@ final class AppStore {
     private let alarmTimeKey = "alarmTime"
     private let alarmEnabledKey = "alarmEnabled"
     private let alarmIDKey = "alarmID"
+    private let alarmsKey = "alarms.v2"
     private let settingsKey = "appSettings"
 
     init(newsService: (any NewsServing)? = nil, defaults: UserDefaults = .standard) {
@@ -44,12 +44,23 @@ final class AppStore {
             progress = ReadingProgress()
         }
 
-        if let savedTime = defaults.object(forKey: alarmTimeKey) as? Date {
-            alarmTime = savedTime
+        if let data = defaults.data(forKey: alarmsKey),
+           let decoded = try? JSONDecoder().decode([CatchUpAlarm].self, from: data) {
+            alarms = decoded
+        } else if defaults.bool(forKey: alarmEnabledKey) {
+            let savedTime = defaults.object(forKey: alarmTimeKey) as? Date
+                ?? Calendar.current.date(from: DateComponents(hour: 7, minute: 0))
+                ?? .now
+            let systemID = defaults.string(forKey: alarmIDKey).flatMap(UUID.init(uuidString:))
+            alarms = [CatchUpAlarm(
+                time: savedTime,
+                isEnabled: true,
+                systemID: systemID,
+                deliveryMode: systemID == nil ? nil : .alarmKit
+            )]
         } else {
-            alarmTime = Calendar.current.date(from: DateComponents(hour: 7, minute: 0)) ?? .now
+            alarms = []
         }
-        alarmEnabled = defaults.bool(forKey: alarmEnabledKey)
         if let data = defaults.data(forKey: settingsKey),
            let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
             settings = decoded
@@ -104,8 +115,10 @@ final class AppStore {
             defaults.set(data, forKey: settingsKey)
         }
         keychain.write(backendAccessToken.trimmingCharacters(in: .whitespacesAndNewlines), account: "access-token")
-        if settings.shieldingEnabled && focusMode.isAuthorized && alarmEnabled {
-            try? focusMode.scheduleMorningShield(at: alarmTime)
+        if settings.shieldingEnabled,
+           focusMode.isAuthorized,
+           let firstAlarm = earliestEnabledAlarm {
+            try? focusMode.scheduleMorningShield(at: firstAlarm.time)
         } else if !settings.shieldingEnabled {
             focusMode.disableMorningShieldSchedule()
         }
@@ -121,40 +134,101 @@ final class AppStore {
         saveProgress()
     }
 
-    func saveAlarm() async {
+    @discardableResult
+    func saveAlarm(id: UUID? = nil, time: Date, label: String) async -> Bool {
         alarmMessage = nil
+        let cleanLabel = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalLabel = cleanLabel.isEmpty ? "Morning catch-up" : cleanLabel
+        let existingIndex = id.flatMap { alarmID in alarms.firstIndex { $0.id == alarmID } }
+        let shouldEnable = existingIndex.map { alarms[$0].isEnabled } ?? true
+
+        if !shouldEnable, let existingIndex {
+            alarms[existingIndex].time = time
+            alarms[existingIndex].label = finalLabel
+            persistAlarms()
+            alarmMessage = "Alarm updated. Turn it on when you're ready."
+            return true
+        }
+
         do {
-            let authorized = try await alarmScheduler.requestAuthorization()
-            guard authorized else {
-                alarmEnabled = false
-                alarmMessage = "Alarm access was not allowed. You can enable it in Settings."
-                return
+            let scheduled = try await alarmScheduler.scheduleDaily(at: time, label: finalLabel)
+            if let existingIndex {
+                let previous = alarms[existingIndex]
+                if let oldSystemID = previous.systemID {
+                    alarmScheduler.cancel(id: oldSystemID, deliveryMode: previous.deliveryMode)
+                }
+                alarms[existingIndex].time = time
+                alarms[existingIndex].label = finalLabel
+                alarms[existingIndex].isEnabled = true
+                alarms[existingIndex].systemID = scheduled.systemID
+                alarms[existingIndex].deliveryMode = scheduled.deliveryMode
+            } else {
+                alarms.append(CatchUpAlarm(
+                    time: time,
+                    label: finalLabel,
+                    isEnabled: true,
+                    systemID: scheduled.systemID,
+                    deliveryMode: scheduled.deliveryMode
+                ))
             }
-            let existingID = defaults.string(forKey: alarmIDKey).flatMap(UUID.init(uuidString:))
-            let newID = try await alarmScheduler.scheduleDaily(at: alarmTime, replacing: existingID)
-            defaults.set(newID.uuidString, forKey: alarmIDKey)
-            defaults.set(alarmTime, forKey: alarmTimeKey)
-            defaults.set(true, forKey: alarmEnabledKey)
-            alarmEnabled = true
-            if settings.shieldingEnabled && focusMode.isAuthorized {
-                try focusMode.scheduleMorningShield(at: alarmTime)
-            }
-            alarmMessage = "Daily alarm scheduled."
+            sortAndPersistAlarms()
+            refreshShieldSchedule()
+            alarmMessage = scheduled.deliveryMode == .alarmKit
+                ? "System alarm scheduled. It can ring through Silent Mode and Focus."
+                : "AlarmKit isn't available with this signing profile, so a daily notification was scheduled instead. Keep Catch Up notifications and sound enabled."
+            return true
         } catch {
-            alarmEnabled = false
-            alarmMessage = "The alarm couldn't be scheduled: \(error.localizedDescription)"
+            alarmMessage = error.localizedDescription
+            return false
         }
     }
 
-    func disableAlarm() {
-        if let rawID = defaults.string(forKey: alarmIDKey), let id = UUID(uuidString: rawID) {
-            try? alarmScheduler.cancel(id: id)
+    func setAlarmEnabled(id: UUID, enabled: Bool) async {
+        guard let index = alarms.firstIndex(where: { $0.id == id }) else { return }
+        alarmMessage = nil
+
+        if !enabled {
+            if let systemID = alarms[index].systemID {
+                alarmScheduler.cancel(id: systemID, deliveryMode: alarms[index].deliveryMode)
+            }
+            alarms[index].isEnabled = false
+            alarms[index].systemID = nil
+            alarms[index].deliveryMode = nil
+            persistAlarms()
+            refreshShieldSchedule()
+            alarmMessage = "Alarm turned off."
+            return
         }
-        defaults.removeObject(forKey: alarmIDKey)
-        defaults.set(false, forKey: alarmEnabledKey)
-        alarmEnabled = false
-        focusMode.disableMorningShieldSchedule()
-        alarmMessage = "Alarm turned off."
+
+        do {
+            let scheduled = try await alarmScheduler.scheduleDaily(
+                at: alarms[index].time,
+                label: alarms[index].label
+            )
+            alarms[index].isEnabled = true
+            alarms[index].systemID = scheduled.systemID
+            alarms[index].deliveryMode = scheduled.deliveryMode
+            persistAlarms()
+            refreshShieldSchedule()
+            alarmMessage = scheduled.deliveryMode == .alarmKit
+                ? "Alarm turned on."
+                : "Alarm turned on as a daily notification because AlarmKit isn't available with this signing profile."
+        } catch {
+            alarms[index].isEnabled = false
+            persistAlarms()
+            alarmMessage = error.localizedDescription
+        }
+    }
+
+    func deleteAlarm(id: UUID) {
+        guard let index = alarms.firstIndex(where: { $0.id == id }) else { return }
+        let alarm = alarms.remove(at: index)
+        if let systemID = alarm.systemID {
+            alarmScheduler.cancel(id: systemID, deliveryMode: alarm.deliveryMode)
+        }
+        persistAlarms()
+        refreshShieldSchedule()
+        alarmMessage = "Alarm deleted."
     }
 
     private func resetStoryProgressIfNeeded() {
@@ -166,6 +240,41 @@ final class AppStore {
         if let data = try? JSONEncoder().encode(progress) {
             defaults.set(data, forKey: progressKey)
         }
+    }
+
+    private var earliestEnabledAlarm: CatchUpAlarm? {
+        alarms
+            .filter(\.isEnabled)
+            .min { minutesFromMidnight($0.time) < minutesFromMidnight($1.time) }
+    }
+
+    private func minutesFromMidnight(_ date: Date) -> Int {
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+    }
+
+    private func sortAndPersistAlarms() {
+        alarms.sort { minutesFromMidnight($0.time) < minutesFromMidnight($1.time) }
+        persistAlarms()
+    }
+
+    private func persistAlarms() {
+        if let data = try? JSONEncoder().encode(alarms) {
+            defaults.set(data, forKey: alarmsKey)
+        }
+        defaults.removeObject(forKey: alarmTimeKey)
+        defaults.removeObject(forKey: alarmEnabledKey)
+        defaults.removeObject(forKey: alarmIDKey)
+    }
+
+    private func refreshShieldSchedule() {
+        guard settings.shieldingEnabled,
+              focusMode.isAuthorized,
+              let firstAlarm = earliestEnabledAlarm else {
+            focusMode.disableMorningShieldSchedule()
+            return
+        }
+        try? focusMode.scheduleMorningShield(at: firstAlarm.time)
     }
 
     private func newsService() throws -> any NewsServing {
