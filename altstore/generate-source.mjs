@@ -60,7 +60,7 @@ const source = {
       version,
       buildVersion,
       date: releaseDate,
-      localizedDescription: "Initial AltStore release.",
+      localizedDescription: "Initial SideStore release.",
       downloadURL: releaseURL,
       size: ipaDetails.size,
       sha256,
@@ -80,5 +80,4 @@ await writeFile(output, `${JSON.stringify(source, null, 2)}\n`, "utf8");
 console.log(`Created ${output}`);
 console.log(`IPA: ${ipaDetails.size} bytes`);
 console.log(`SHA-256: ${sha256}`);
-console.log(`Source URL after release publishing: ${releaseRoot}/source.json`);
-
+console.log(`SideStore source URL after release publishing: ${releaseRoot}/sidestore-source.json`);
