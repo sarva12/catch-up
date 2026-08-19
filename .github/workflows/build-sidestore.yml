@@ -22,7 +22,7 @@ on:
       build_number:
         description: Numeric build number
         required: true
-        default: "2"
+        default: "3"
 
 permissions:
   contents: write
@@ -54,7 +54,7 @@ jobs:
         env:
           BUNDLE_ID: ${{ inputs.bundle_id || 'com.github.sarva12.CatchUpFree' }}
           VERSION: ${{ inputs.version || '1.0.0' }}
-          BUILD_NUMBER: ${{ inputs.build_number || '2' }}
+          BUILD_NUMBER: ${{ inputs.build_number || '3' }}
         run: |
           xcodebuild \
             -project CatchUpFree.xcodeproj \
@@ -66,8 +66,15 @@ jobs:
             MARKETING_VERSION="$VERSION" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            build
+          CODE_SIGNING_REQUIRED=NO \
+          build
+
+      - name: Verify AlarmKit permission text
+        run: |
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          USAGE_DESCRIPTION="$(/usr/libexec/PlistBuddy -c 'Print :NSAlarmKitUsageDescription' "$APP_PATH/Info.plist")"
+          test -n "$USAGE_DESCRIPTION"
 
       - name: Package IPA
         run: |
@@ -84,7 +91,7 @@ jobs:
           BUNDLE_ID: ${{ inputs.bundle_id || 'com.github.sarva12.CatchUpFree' }}
           DEVELOPER_NAME: ${{ inputs.developer_name || 'sarva12' }}
           VERSION: ${{ inputs.version || '1.0.0' }}
-          BUILD_NUMBER: ${{ inputs.build_number || '2' }}
+          BUILD_NUMBER: ${{ inputs.build_number || '3' }}
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER}"
           REPOSITORY="${GITHUB_REPOSITORY#*/}"
