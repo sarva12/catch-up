@@ -5,12 +5,12 @@ struct TodayView: View {
     @State private var selectedSection: String?
 
     private var sections: [String] {
-        Array(Set(store.stories.map(\.section))).sorted()
+        Array(Set(store.requiredStories.map(\.section))).sorted()
     }
 
     private var visibleStories: [NewsStory] {
-        guard let selectedSection else { return store.stories }
-        return store.stories.filter { $0.section == selectedSection }
+        guard let selectedSection else { return store.requiredStories }
+        return store.requiredStories.filter { $0.section == selectedSection }
     }
 
     var body: some View {
@@ -117,7 +117,7 @@ private struct CatchUpHeader: View {
             HStack {
                 Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
                 Spacer()
-                Text("\(store.completedCount) / \(store.stories.count) READ")
+                Text("\(store.completedCount) / \(store.requiredStories.count) READ")
             }
             .font(.system(size: 12, weight: .bold, design: .monospaced))
             ProgressView(value: Double(store.completedCount), total: Double(max(store.stories.count, 1)))
@@ -210,6 +210,11 @@ private struct CompletionCard: View {
             Text("Go live your day. We'll be here tomorrow.")
                 .font(.system(size: 15, design: .rounded))
                 .foregroundStyle(.secondary)
+            Link(destination: URL(string: "https://www.perplexity.ai/discover")!) {
+                Label("GO DEEPER IN PERPLEXITY", systemImage: "arrow.up.right")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(MonochromeButtonStyle(filled: false))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 52)
