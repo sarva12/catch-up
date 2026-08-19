@@ -35,7 +35,7 @@ struct AlarmScheduler {
         do {
             let authorization = try await manager.requestAuthorization()
             if authorization == .authorized {
-                let id = try await scheduleAlarmKit(at: date, label: label)
+                let id = try await scheduleAlarmKit(at: date)
                 return ScheduledAlarm(systemID: id, deliveryMode: .alarmKit)
             }
         } catch {
@@ -56,7 +56,7 @@ struct AlarmScheduler {
         }
     }
 
-    private func scheduleAlarmKit(at date: Date, label: String) async throws -> UUID {
+    private func scheduleAlarmKit(at date: Date) async throws -> UUID {
         let components = Calendar.current.dateComponents([.hour, .minute], from: date)
         let time = Alarm.Schedule.Relative.Time(
             hour: components.hour ?? 7,
@@ -77,7 +77,7 @@ struct AlarmScheduler {
             systemImageName: "stop.fill"
         )
         let alert = AlarmPresentation.Alert(
-            title: label,
+            title: "Your morning catch-up is ready",
             stopButton: stopButton,
             secondaryButton: startButton,
             secondaryButtonBehavior: .custom
