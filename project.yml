@@ -11,6 +11,8 @@ targets:
   CatchUp:
     type: application
     platform: iOS
+    info:
+      path: CatchUp/Info.plist
     sources:
       - CatchUp
     dependencies:
@@ -19,12 +21,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.CatchUp
         PRODUCT_NAME: CatchUp
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Catch Up
-        INFOPLIST_KEY_NSAlarmKitUsageDescription: Catch Up schedules your morning alarm and opens your daily news briefing.
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: 1.0.0
