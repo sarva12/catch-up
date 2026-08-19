@@ -67,15 +67,20 @@ final class AppStore {
         } else {
             settings = AppSettings()
         }
+        settings.dailyStoryCount = 4
         backendAccessToken = keychain.read(account: "access-token")
     }
 
+    var requiredStories: [NewsStory] {
+        Array(stories.prefix(4))
+    }
+
     var completedCount: Int {
-        stories.filter { progress.completedStoryIDs.contains($0.id) }.count
+        requiredStories.filter { progress.completedStoryIDs.contains($0.id) }.count
     }
 
     var isCaughtUp: Bool {
-        !stories.isEmpty && completedCount == stories.count
+        !requiredStories.isEmpty && completedCount == requiredStories.count
     }
 
     func loadBriefing() async {
@@ -107,7 +112,7 @@ final class AppStore {
     }
 
     func saveSettings() {
-        settings.dailyStoryCount = min(max(settings.dailyStoryCount, 3), 7)
+        settings.dailyStoryCount = 4
         if settings.selectedTopics.isEmpty {
             settings.selectedTopics = [.world]
         }
