@@ -13,6 +13,16 @@ targets:
     platform: iOS
     info:
       path: CatchUp/Info.plist
+      properties:
+        CFBundleDisplayName: Catch Up
+        NSAlarmKitUsageDescription: Catch Up schedules alarms for the times you choose so you can start your daily news briefing.
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+          UISceneConfigurations: {}
+        UIApplicationSupportsIndirectInputEvents: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
     sources:
       - path: CatchUp
         excludes:
