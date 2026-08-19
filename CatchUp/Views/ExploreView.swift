@@ -19,7 +19,6 @@ private struct SafariPage: UIViewControllerRepresentable {
         configuration.entersReaderIfAvailable = false
         configuration.barCollapsingEnabled = true
         let controller = SFSafariViewController(url: url, configuration: configuration)
-        controller.preferredControlTintColor = .black
         controller.dismissButtonStyle = .close
         return controller
     }
